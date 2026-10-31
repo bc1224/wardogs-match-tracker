@@ -1899,7 +1899,7 @@ async function renderMatchPage(id) {
   </div></div>
 
   <div class="grid tiles" style="--cols:${Math.min(5, Math.ceil((8 + !!d.combat + (d.live_cash?.end_balance != null)) / 2))}">
-    ${tile("XP", fmt(m.xp), vsAvg(m.xp, base.xp) || (m.xp == null ? "not on the screens read" : ""))}
+    ${tile("XP", fmt(m.xp), [vsAvg(m.xp, base.xp), m.xp_from === "feed" ? "added up from the kill feed, so a little may be missed" : ""].filter(Boolean).join("<br>") || (m.xp == null ? "not on the screens read" : ""))}
     ${tile("Net cash", `<span class="${n < 0 ? "neg" : n > 0 ? "pos" : ""}">${money(n)}</span>`, vsAvg(n, base.cash))}
     ${tile("Earned", money(m.cash_earned), sm.bonus != null ? `incl. ${money(sm.bonus)} bonus` : "")}
     ${tile("Spent", money(m.cash_spent), "")}

@@ -31,6 +31,28 @@ class RoleXpFixTests(unittest.TestCase):
             st.db.close()
 
 
+class FeedXpTests(unittest.TestCase):
+    def test_kill_feed_xp_stands_in_for_a_misread_round_xp(self):
+        # 2026-10-30: the results screen shows no round XP; a "49xp" feed line left on it was
+        # taken for the round's XP while the kill feed added up to far more
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(os.path.join(d, "t.db"))
+            sid = st.start_session(0)
+            feed = {"feed": [{"label": "Kill", "xp": 100}, {"label": "Tip", "cash": 25, "xp": None}, {"label": "Other", "xp": 49}]}
+            misread = st.add_match(sid, 0, 100, "auto", parsed={"xp": 49}, details=feed)
+            none = st.add_match(sid, 200, 300, "auto", details=feed)
+            roles = st.add_match(sid, 400, 500, "auto", parsed={"xp": 1700}, details=dict(feed, xp_roles=True))
+            checked = st.add_match(sid, 600, 700, "auto", parsed={"xp": 60}, details=feed)
+            st.update_match(checked, {"reviewed": 1})
+            blank = st.add_match(sid, 800, 850, "auto", details=feed)  # checked with no XP filled in
+            st.update_match(blank, {"reviewed": 1})
+            empty = st.add_match(sid, 900, 1000, "auto")
+            ms = {m["id"]: m for m in st.dump()["matches"]}
+            self.assertEqual([(ms[i]["xp"], ms[i].get("xp_from")) for i in (misread, none, roles, checked, blank, empty)],
+                             [(149, "feed"), (149, "feed"), (1700, None), (60, None), (149, "feed"), (None, None)])
+            st.db.close()
+
+
 def _l(text, x, y):
     return {"text": text, "x": x, "y": y}
 

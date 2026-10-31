@@ -502,6 +502,13 @@ class Store:
             m["ocr_hint"] = [l["text"] for l in ocr if HINT_RE.search(l.get("text", ""))][:8]
             m["role_levels"] = json.loads(m["role_levels"]) if m.get("role_levels") else None
             m["details"] = json.loads(m["details"]) if m.get("details") else None
+            if m["details"]:
+                # the results screen shows no round XP, so what it gave is a feed line left on
+                # it ("49xp"): the kill feed's total stands in, unless the Progression tab gave the
+                # round's gain or you checked the number yourself
+                feed = sum(e.get("xp") or 0 for e in m["details"].get("feed") or [] if isinstance(e, dict))
+                if feed and (m["xp"] is None or not (m["reviewed"] or m["details"].get("xp_roles")) and m["xp"] < feed):
+                    m["xp"], m["xp_from"] = feed, "feed"
             if m["details"]:  # the full timeline is fetched per match
                 m["details"].pop("timeline", None)
                 m["details"].pop("cash_events", None)
